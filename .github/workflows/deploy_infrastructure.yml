@@ -96,3 +96,52 @@ jobs:
           AWS_DEFAULT_REGION: ${{ github.event.inputs.AWS_REGION }}
         working-directory: ./terraform/aws_infra
         shell: bash
+
+      - name: Generate Job Summary
+        if: always()
+        run: |
+          echo "# 🚀 AWS Infrastructure Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📋 Deployment Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **AWS Region** | \`${{ github.event.inputs.AWS_REGION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Name Prefix** | \`${{ github.event.inputs.NAME_PREFIX }}-${{ env.ACTOR_PREFIX }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **EC2 Instance Type** | \`${{ github.event.inputs.EC2_INSTANCE_TYPE }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Triggered By** | @${{ github.actor }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Workflow Run** | [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📦 Deployed Resources" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ S3 Bucket: \`${{ github.event.inputs.NAME_PREFIX }}-${{ env.ACTOR_PREFIX }}-s3-tfstate\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ VPC with networking components" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ EC2 Instance (\`${{ github.event.inputs.EC2_INSTANCE_TYPE }}\`)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Security Groups and associated resources" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔄 Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Step | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Init | ${{ steps.init.outcome == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Validate | ${{ steps.validate.outcome == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Terraform Apply | ${{ steps.apply.outcome == 'success' && '✅ Success' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.apply.outcome }}" == "success" ]; then
+            echo "## 🎉 Deployment Successful!" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Your AWS infrastructure has been successfully deployed in the **${{ github.event.inputs.AWS_REGION }}** region." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🔐 Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "1. Check the Terraform outputs for EC2 instance details" >> $GITHUB_STEP_SUMMARY
+            echo "2. Connect to your EC2 instance using SSH:" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`bash" >> $GITHUB_STEP_SUMMARY
+            echo "   ssh -i /path/to/your/private/key ec2-user@<instance-public-ip>" >> $GITHUB_STEP_SUMMARY
+            echo "   \`\`\`" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Please check the workflow logs for detailed error messages." >> $GITHUB_STEP_SUMMARY
+          fi
+        shell: bash
